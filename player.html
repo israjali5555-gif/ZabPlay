@@ -8,7 +8,7 @@
     <style>
         body { background:#0F0F0F; color:white; margin:0; font-family: "Roboto", sans-serif; overflow-x: hidden; }
         .video-wrapper { position: sticky; top: 0; z-index: 1000; background: #000; width: 100%; aspect-ratio: 16/9; box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
-        #player { width: 100%; height: 100%; }
+        #player { width: 100%; height: 100%; border:none; }
         .info-card { padding: 15px; background: #0F0F0F; }
         .video-title { font-size: 17px; font-weight: bold; line-height: 1.4; margin-bottom: 8px; color: #fff; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
         .meta-text { font-size: 12px; color: #aaa; margin-bottom: 15px; }
@@ -19,7 +19,7 @@
         .channel-section img { width: 38px; height: 38px; border-radius: 50%; background: #333; object-fit: cover; }
         .sub-btn { background: #fff; color: #000; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 13px; margin-left: auto; }
         .up-next-title { font-size: 15px; font-weight: bold; padding: 15px; color: #fff; }
-        .suggestion-card { display: flex; gap: 12px; padding: 10px 15px; text-decoration: none; color: white; transition: background 0.3s; }
+        .suggestion-card { display: flex; gap: 12px; padding: 10px 15px; text-decoration: none; color: white; }
         .suggestion-card .thumb-box { position: relative; width: 150px; flex-shrink: 0; aspect-ratio: 16/9; }
         .suggestion-card img { width: 100%; height: 100%; border-radius: 8px; object-fit: cover; background: #222; }
         .s-text { flex: 1; overflow: hidden; }
@@ -29,9 +29,12 @@
     </style>
 </head>
 <body>
-    <div class="video-wrapper"><div id="player"></div></div>
+    <div class="video-wrapper">
+        <iframe id="player" src="" allow="autoplay; fullscreen"></iframe>
+    </div>
+    
     <div class="info-card">
-        <div class="video-title" id="v-title">Loading...</div>
+        <div class="video-title" id="v-title">Loading video...</div>
         <div class="meta-text" id="v-meta">-- views • ZabPlay Premium</div>
         <div class="action-row">
             <button class="chip"><i class="material-icons">thumb_up_off_alt</i> <span id="v-likes">--</span></button>
@@ -47,47 +50,31 @@
             <button class="sub-btn">Subscribe</button>
         </div>
     </div>
-    <div class="up-next-title">Up Next • Mixed Songs</div>
+
+    <div class="up-next-title">Up Next • Mixed Hits</div>
     <div id="suggestions-container"></div>
-    <div id="loading-indicator">KEEP SCROLLING FOR MORE...</div>
+    <div id="loading-indicator">MIXING MORE CONTENT...</div>
 
     <script>
+        // API Key sirf details ke liye (Bahut kam quota kharch karegi)
         const API_KEY = 'AIzaSyBsEsHKy70X0jKIz3y2NNe863uCr45_qHg'; 
         const urlParams = new URLSearchParams(window.location.search);
         let videoId = urlParams.get('v');
-        let nextPageToken = '';
         let isLoadingRelated = false;
-        let currentCategoryId = '';
-        let dynamicSearchQuery = '';
 
         if (!videoId) window.location.href = 'index.html';
 
-        var tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        document.head.appendChild(tag);
+        // Direct Embed for No-Limit Playback
+        document.getElementById('player').src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
 
-        let player;
-        function onYouTubeIframeAPIReady() {
-            player = new YT.Player('player', {
-                videoId: videoId,
-                playerVars: { 'autoplay': 1, 'rel': 0, 'modestbranding': 1, 'playsinline': 1 },
-                events: { 'onReady': () => fetchVideoDetails(videoId) }
-            });
-        }
-
-        async function fetchVideoDetails(vId) {
+        async function fetchVideoDetails() {
             try {
-                const vRes = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${vId}&key=${API_KEY}`);
+                // API Key use karke title aur channel info lena
+                const vRes = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoId}&key=${API_KEY}`);
                 const vData = await vRes.json();
                 if(!vData.items[0]) return;
                 
                 const video = vData.items[0];
-                currentCategoryId = video.snippet.categoryId;
-                
-                // SMART FIX: Pure title nahi, sirf main keywords + "songs mix" use karenge
-                const titleParts = video.snippet.title.split(' ');
-                dynamicSearchQuery = titleParts.slice(0, 2).join(' ') + " latest songs mix"; 
-
                 document.getElementById('v-title').innerText = video.snippet.title;
                 document.getElementById('v-meta').innerText = formatViews(video.statistics.viewCount) + " views";
                 document.getElementById('v-likes').innerText = formatViews(video.statistics.likeCount);
@@ -98,44 +85,47 @@
                 document.getElementById('c-img').src = cData.items[0].snippet.thumbnails.default.url;
                 document.getElementById('c-subs').innerText = formatViews(cData.items[0].statistics.subscriberCount) + " subscribers";
 
-                loadUnlimitedRelated();
-            } catch (e) { console.error(e); }
+                // Suggestions load karna bina API limit kharch kiye
+                loadUnlimitedRelated(video.snippet.title);
+            } catch (e) { console.error("Quota issue, switching to full proxy..."); loadUnlimitedRelated("Trending Mix"); }
         }
 
-        async function loadUnlimitedRelated() {
+        async function loadUnlimitedRelated(title) {
             if (isLoadingRelated) return;
             isLoadingRelated = true;
 
-            // GLOBAL MIX: Category + Dynamic Search + PageToken for Infinite Scroll
-            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&q=${encodeURIComponent(dynamicSearchQuery)}&type=video&videoCategoryId=${currentCategoryId}&pageToken=${nextPageToken}&key=${API_KEY}`;
+            // SMART MIXING: Title ke words + random category mix
+            const mixKeywords = ["latest hits", "top mix", "new songs"];
+            const query = title.split(' ').slice(0, 2).join(' ') + " " + mixKeywords[Math.floor(Math.random() * mixKeywords.length)];
 
             try {
-                const res = await fetch(url);
+                // UNLIMITED PROXY: Isse API Key kharch nahi hoti (0 Units)
+                const res = await fetch(`https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(query)}&filter=videos`);
                 const data = await res.json();
-                if(data.items) {
-                    nextPageToken = data.nextPageToken || '';
+                
+                if(data.content) {
                     let html = "";
-                    data.items.forEach(item => {
-                        if(item.id.videoId === videoId) return; // Skip current video
+                    data.content.forEach(item => {
+                        if(item.videoId === videoId) return;
                         html += `
-                        <a class="suggestion-card" href="player.html?v=${item.id.videoId}">
-                            <div class="thumb-box"><img src="${item.snippet.thumbnails.medium.url}"></div>
+                        <a class="suggestion-card" href="player.html?v=${item.videoId}">
+                            <div class="thumb-box"><img src="${item.thumbnail}"></div>
                             <div class="s-text">
-                                <div class="s-title">${item.snippet.title}</div>
-                                <div class="s-meta">${item.snippet.channelTitle} • ZabPlay</div>
+                                <div class="s-title">${item.title}</div>
+                                <div class="s-meta">${item.uploaderName} • ZabPlay Mix</div>
                             </div>
                         </a>`;
                     });
                     document.getElementById('suggestions-container').innerHTML += html;
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Proxy error"); }
             isLoadingRelated = false;
         }
 
-        // INFINITE SCROLL: Jaise hi niche pahuche, aur videos load hon
+        // Infinite Scroll
         window.onscroll = () => {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000) {
-                if (nextPageToken && !isLoadingRelated) loadUnlimitedRelated();
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 800) {
+                loadUnlimitedRelated(document.getElementById('v-title').innerText);
             }
         };
 
@@ -144,6 +134,9 @@
             if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
             return num;
         }
+
+        // Run on load
+        fetchVideoDetails();
     </script>
 </body>
 </html>

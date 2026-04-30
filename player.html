@@ -8,7 +8,7 @@
     <style>
         body { background:#0F0F0F; color:white; margin:0; font-family: "Roboto", sans-serif; overflow-x: hidden; }
         
-        /* 1. STICKY VIDEO PLAYER (LOCK ON TOP) */
+        /* 1. STICKY VIDEO PLAYER */
         .video-wrapper { 
             position: sticky; 
             top: 0; 
@@ -79,7 +79,8 @@
     <div id="suggestions"></div>
 
     <script>
-        const API_KEY = 'AIzaSyDq0kXgyqtOFXPjytI5yw5tuIZYl-xuTFs'; 
+        // UPDATED API KEY
+        const API_KEY = 'AIzaSyBsEsHKy70X0jKIz3y2NNe863uCr45_qHg'; 
         const urlParams = new URLSearchParams(window.location.search);
         let videoId = urlParams.get('v');
 
@@ -94,7 +95,13 @@
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
                 videoId: videoId,
-                playerVars: { 'autoplay': 1, 'rel': 0, 'modestbranding': 1, 'origin': window.location.origin },
+                playerVars: { 
+                    'autoplay': 1, 
+                    'rel': 0, 
+                    'modestbranding': 1, 
+                    'playsinline': 1,
+                    'origin': window.location.origin 
+                },
                 events: { 'onReady': onPlayerReady }
             });
         }
@@ -107,12 +114,19 @@
         async function fetchVideoDetails(vId) {
             try {
                 const vRes = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${vId}&key=${API_KEY}`);
+                
+                // QUOTA CHECK
+                if (vRes.status === 403) {
+                    document.getElementById('v-title').innerHTML = "<span style='color:red;'>API Limit Reached for today!</span>";
+                    return;
+                }
+
                 const vData = await vRes.json();
-                if(!vData.items[0]) return;
+                if(!vData.items || !vData.items[0]) return;
                 
                 const video = vData.items[0];
                 document.getElementById('v-title').innerText = video.snippet.title;
-                document.getElementById('v-meta').innerText = formatViews(video.statistics.viewCount) + " views • Just Now";
+                document.getElementById('v-meta').innerText = formatViews(video.statistics.viewCount) + " views • ZabPlay Premium";
                 document.getElementById('v-likes').innerText = formatViews(video.statistics.likeCount);
 
                 const channelId = video.snippet.channelId;
@@ -127,21 +141,16 @@
                 document.getElementById('c-img').src = channel.snippet.thumbnails.default.url;
                 document.getElementById('c-subs').innerText = formatViews(channel.statistics.subscriberCount) + " subscribers";
 
-                document.getElementById('channel-link').onclick = () => {
-                    window.location.href = `channel.html?cid=${channelId}`;
-                };
-
-                // FIXED: Category Based Related Videos
+                // SMART RELATED VIDEOS
                 loadRelated(categoryId, video.snippet.title);
 
             } catch (e) { console.error("API Error", e); }
         }
 
-        // 3. SMART RELATED VIDEOS (Category + Keyword)
         async function loadRelated(catId, title) {
-            // Title ke pehle do words le rahe hain for better search
+            // Title ke 2 words for accuracy
             const searchQuery = title.split(' ').slice(0,2).join(' ');
-            const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&videoCategoryId=${catId}&q=${encodeURIComponent(searchQuery)}&type=video&key=${API_KEY}`);
+            const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&q=${encodeURIComponent(searchQuery)}&type=video&key=${API_KEY}`);
             const data = await res.json();
             
             let html = "";
@@ -164,6 +173,7 @@
         }
 
         function formatViews(num) {
+            if (!num) return "0";
             if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
             if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
             return num;
@@ -171,3 +181,4 @@
     </script>
 </body>
 </html>
+

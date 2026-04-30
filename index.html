@@ -83,18 +83,20 @@
         </div>
         <div style="display: flex; gap: 15px; align-items: center;">
             <i class="material-icons">cast</i>
-            <i class="material-icons" onclick="loadCategory('New Viral Videos')">search</i>
+            <i class="material-icons" onclick="loadCategory('New Hindi Movies 2026')">search</i>
             <div style="width: 28px; height: 28px; border-radius: 50%; background: #FF5722; text-align: center; line-height: 28px; font-weight: bold; font-size: 14px;" onclick="logout()">R</div>
         </div>
     </header>
 
     <main id="main-video-feed" style="padding-bottom: 80px;"></main>
+    
     <div id="loading" class="loading-shimmer">EXPLORING NEW CONTENT...</div>
+    <div id="sentinel" style="height: 20px;"></div>
 
     <nav class="bottom-nav">
         <div class="nav-item" onclick="location.reload()"><i class="material-icons">home</i>Home</div>
-        <div class="nav-item" onclick="loadCategory('Shorts Trending')"><i class="material-icons">bolt</i>Shorts</div>
-        <div class="nav-item" onclick="loadCategory('Latest Music')"><i class="material-icons">subscriptions</i>Subs</div>
+        <div class="nav-item" onclick="loadCategory('YouTube Shorts New')"><i class="material-icons">bolt</i>Shorts</div>
+        <div class="nav-item" onclick="loadCategory('Trending Music India')"><i class="material-icons">subscriptions</i>Subs</div>
         <div class="nav-item" onclick="alert('Library is empty!')"><i class="material-icons">video_library</i>Library</div>
     </nav>
 
@@ -104,25 +106,25 @@
         let nextPageToken = ''; 
         let isLoading = false;
         let currentQuery = ''; 
+        let loadedVideoIds = new Set(); // FIXED: Duplicate videos rokne ke liye
 
         window.onload = () => {
             setTimeout(() => {
                 document.getElementById('zabplay-splash').style.opacity = '0';
                 setTimeout(() => {
                     document.getElementById('zabplay-splash').style.display = 'none';
-                    videoFeed.innerHTML = '';
                     loadYouTubeVideos();
                 }, 500);
             }, 2500);
         };
 
-        // FIXED: New category logic (Purani list delete + Shuru se loading)
         async function loadCategory(query) {
             if (isLoading) return;
             window.scrollTo(0, 0);
             videoFeed.innerHTML = '';
             nextPageToken = '';
             currentQuery = query;
+            loadedVideoIds.clear(); // Reset unique filter
             document.getElementById('loading').innerText = "DISCOVERING " + query.toUpperCase() + "...";
             loadYouTubeVideos();
         }
@@ -134,34 +136,29 @@
 
             try {
                 let url;
-                // FIXED: Agar query hai toh Search API, nahi toh Trending API
+                // FIXED: Agar query hai toh Search API, nahi toh Trending
                 if(currentQuery !== '') {
-                    url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(currentQuery)}&type=video&pageToken=${nextPageToken}&key=${API_KEY}`;
+                    url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=25&q=${encodeURIComponent(currentQuery)}&type=video&pageToken=${nextPageToken}&key=${API_KEY}`;
                 } else {
-                    url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&regionCode=IN&maxResults=20&pageToken=${nextPageToken}&key=${API_KEY}`;
+                    // Default Home Feed: Mix of movies and trending
+                    url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=25&q=latest+movies+trailers+songs&type=video&pageToken=${nextPageToken}&key=${API_KEY}`;
                 }
                 
                 const response = await fetch(url);
                 const data = await response.json();
 
                 if (data.items && data.items.length > 0) {
-                    // IMPORTANT: Save next token for unique content
                     nextPageToken = data.nextPageToken || ''; 
 
-                    // Randomize home feed on first load only
-                    let videos = data.items;
-                    if(videoFeed.innerHTML === '' && currentQuery === '') {
-                        videos = videos.sort(() => Math.random() - 0.5);
-                    }
-
-                    videos.forEach(item => {
-                        // Handle ID for both Search and Videos API
+                    data.items.forEach(item => {
                         const vId = (typeof item.id === 'string') ? item.id : item.id.videoId;
-                        if(!vId) return;
+                        
+                        // FIXED: Duplicate video check
+                        if(!vId || loadedVideoIds.has(vId)) return;
+                        loadedVideoIds.add(vId);
 
                         const title = item.snippet.title;
                         const channel = item.snippet.channelTitle;
-                        const views = item.statistics ? formatViews(item.statistics.viewCount) : "New Video";
                         const thumb = item.snippet.thumbnails.high.url;
 
                         const card = document.createElement('div');
@@ -175,37 +172,28 @@
                                 <div class="channel-icon" style="background-image: url('https://ui-avatars.com/api/?name=${encodeURIComponent(channel)}&background=random'); background-size: cover;"></div>
                                 <div class="video-text">
                                     <h3>${title}</h3>
-                                    <p>${channel} • ${views}</p>
+                                    <p>${channel} • YouTube</p>
                                 </div>
                             </div>`;
                         videoFeed.appendChild(card);
                     });
-                } else {
-                    // If no more items, reset to loop or show message
-                    nextPageToken = '';
                 }
             } catch (error) {
                 console.error("API Error:", error);
             } finally {
                 isLoading = false;
-                document.getElementById('loading').style.display = (nextPageToken) ? 'none' : 'block';
+                document.getElementById('loading').style.display = 'none';
             }
         }
 
-        // SMOOTH INFINITE SCROLL
-        window.onscroll = () => {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1500) {
-                if (!isLoading && nextPageToken) {
-                    loadYouTubeVideos();
-                }
+        // FIXED: Advance Infinite Scroll using Intersection Observer
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && !isLoading && nextPageToken) {
+                loadYouTubeVideos();
             }
-        };
+        }, { threshold: 0.5 });
 
-        function formatViews(num) {
-            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M views';
-            if (num >= 1000) return (num / 1000).toFixed(1) + 'K views';
-            return num + ' views';
-        }
+        observer.observe(document.getElementById('sentinel'));
 
         function logout() { localStorage.removeItem('isLoggedIn'); window.location.href = 'login.html'; }
     </script>

@@ -127,7 +127,8 @@
     </nav>
 
     <script>
-        const API_KEY = 'AIzaSyDq0kXgyqtOFXPjytI5yw5tuIZYl-xuTFs';
+        // NEW API KEY APPLIED
+        const API_KEY = 'AIzaSyBsEsHKy70X0jKIz3y2NNe863uCr45_qHg';
         const videoFeed = document.getElementById('main-video-feed');
         let nextPageToken = ''; 
         let isLoading = false;
@@ -192,6 +193,14 @@
                 const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&q=${encodeURIComponent(currentQuery)}&type=video${durationFilter}&pageToken=${nextPageToken}&key=${API_KEY}`;
                 
                 const response = await fetch(url);
+                
+                // QUOTA CHECK
+                if (response.status === 403) {
+                    document.getElementById('loading').innerHTML = "<div style='color:#FF5252; padding:20px;'><b>API Limit Finished!</b><br>Try another key or wait until tomorrow.</div>";
+                    isLoading = false;
+                    return;
+                }
+
                 const data = await response.json();
 
                 if (data.items) {
@@ -244,6 +253,7 @@
                 }
             } catch (error) {
                 console.error("API Error:", error);
+                document.getElementById('loading').innerText = "CONNECTION ERROR";
             } finally {
                 isLoading = false;
                 document.getElementById('loading').style.display = 'none';
@@ -267,3 +277,4 @@
     </script>
 </body>
 </html>
+

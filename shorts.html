@@ -1,1 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <title>Shorts</title>
+</head>
+<body style="background: black; overflow: hidden; height: 100vh; margin: 0;">
 
+    <div class="shorts-container" style="position: relative; width: 100%; height: calc(100vh - 60px);">
+        <video id="shortsVideo" loop autoplay muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
+            <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+        </video>
+
+        <div class="shorts-ui-right" style="position: absolute; bottom: 100px; right: 15px; text-align: center; color: white; display: flex; flex-direction: column; gap: 20px;">
+            
+            <div onclick="incrementLike()" style="cursor: pointer;">
+                <span class="material-icons-outlined" id="likeIcon" style="font-size: 32px;">thumb_up</span>
+                <p id="likeCount" style="font-size: 12px; margin-top: 5px;">12K</p>
+            </div>
+            
+            <div>
+                <span class="material-icons-outlined" style="font-size: 32px;">thumb_down</span>
+                <p style="font-size: 12px; margin-top: 5px;">Dislike</p>
+            </div>
+            
+            <div>
+                <span class="material-icons-outlined" style="font-size: 32px;">comment</span>
+                <p style="font-size: 12px; margin-top: 5px;">450</p>
+            </div>
+            
+            <div>
+                <span class="material-icons-outlined" style="font-size: 32px;">share</span>
+                <p style="font-size: 12px; margin-top: 5px;">Share</p>
+            </div>
+        </div>
+
+        <div class="shorts-ui-bottom" style="position: absolute; bottom: 100px; left: 15px; color: white; width: 80%;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: #3ea6ff;"></div>
+                <p style="font-weight: bold; font-size: 14px;">@RuffianGaming</p>
+                <button style="background: white; color: black; border: none; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 12px;">Subscribe</button>
+            </div>
+            <p style="font-size: 14px; margin-top: 10px;">Insane 1v4 Clutch! 🔥 #gaming #shorts</p>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item"><span class="material-icons-outlined">home</span><br>Home</a>
+        <a href="shorts.html" class="nav-item active"><span class="material-icons-outlined">explore</span><br>Shorts</a>
+        <a href="upload.html" class="nav-item"><span class="material-icons-outlined" style="font-size:35px;">add_circle_outline</span></a>
+        <a href="subscriptions.html" class="nav-item"><span class="material-icons-outlined">subscriptions</span><br>Subs</a>
+        <a href="profile.html" class="nav-item"><span class="material-icons-outlined">account_circle</span><br>You</a>
+    </nav>
+
+    <script>
+        let liked = false;
+        function incrementLike() {
+            const icon = document.getElementById('likeIcon');
+            const count = document.getElementById('likeCount');
+            if(!liked) {
+                icon.style.color = '#3ea6ff';
+                count.innerText = "12.1K";
+                liked = true;
+            } else {
+                icon.style.color = 'white';
+                count.innerText = "12K";
+                liked = false;
+            }
+        }
+    </script>
+</body>
+</html>

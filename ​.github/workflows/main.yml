@@ -1,16 +1,17 @@
-name: Build Android APK
-on: [push]
+name: Build ZabPlay APK
+on:
+  push:
+    branches: [ "main" ]
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Build Web to APK
-        uses: ayanda-m/web-to-apk-action@v1
+      - name: Build APK
+        uses: jonasmerlin/webapp-to-apk-action@v1
         with:
-          app-name: "ZabPlay"
-          app-id: "com.israjali.zabplay"
-          web-url: "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
-          icon-path: "" # Agar koi icon hai to uska naam yahan likho
+          url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          name: ZabPlay

@@ -1,1 +1,121 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background-color: #0f0f0f; color: white; font-family: Roboto, Arial, sans-serif; padding-bottom: 70px; overflow-x: hidden; }
+a { text-decoration: none; color: inherit; display: inline-block; width: 100%; }
 
+/* === CODING SE BANA LOGO (NAYA) === */
+/* Header ke liye chota logo */
+.zab-logo-box {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #FF0000 0%, #8B0000 100%); /* Red to Dark Red Gradient */
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Splash ke liye bada logo */
+.splash-logo-box {
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, #FF0000 0%, #8B0000 100%);
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.7);
+    animation: splashZoom 1.2s ease-out forwards;
+}
+
+/* Play Button (Triangle) jo logo ke andar dikhega */
+.zab-logo-box::after {
+    content: '';
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-left: 10px solid white;
+    margin-left: 2px;
+}
+
+.splash-logo-box::after {
+    content: '';
+    border-top: 25px solid transparent;
+    border-bottom: 25px solid transparent;
+    border-left: 40px solid white;
+    margin-left: 6px;
+}
+
+/* === SPLASH SCREEN STYLE === */
+#zabplay-splash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #0f0f0f;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+@keyframes splashZoom {
+    0% { transform: scale(0.7); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* === HEADER STYLE === */
+.header { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between;
+    padding: 10px 15px; 
+    position: sticky; 
+    top: 0; 
+    background: #0f0f0f; 
+    z-index: 100; 
+    height: 55px;
+}
+
+.brand-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header .brand-name {
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+    letter-spacing: -0.5px;
+}
+
+.header-icons { 
+    display: flex; 
+    align-items: center; 
+    gap: 18px; 
+}
+
+/* === BAAKI AAPKA PURANA CSS === */
+.material-icons-outlined { font-size: 24px; cursor: pointer; color: white; }
+.user-profile-circle { background: #FF5722; padding: 4px 10px; border-radius: 50%; font-size: 14px; font-weight: bold; }
+
+.categories { display: flex; gap: 10px; padding: 12px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+.categories::-webkit-scrollbar { display: none; }
+.categories button { background: #272727; color: white; border: none; padding: 7px 15px; border-radius: 8px; font-size: 14px; cursor: pointer; }
+.categories button.active { background: white; color: black; }
+
+.video-card { margin-bottom: 15px; width: 100%; }
+.thumbnail-container { width: 100%; aspect-ratio: 16/9; background: #222; position: relative; overflow: hidden; }
+.feed-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vid-time { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.8); color: white; padding: 2px 5px; border-radius: 4px; font-size: 11px; }
+
+.video-info { display: flex; padding: 12px; gap: 12px; }
+.channel-img { width: 36px; height: 36px; border-radius: 50%; background: #444; flex-shrink: 0; background-size: cover; }
+.text h3 { font-size: 14px; margin-bottom: 4px; font-weight: 500; line-height: 1.4; }
+.text p { color: #aaa; font-size: 12px; }
+
+.bottom-nav { position: fixed; bottom: 0; width: 100%; height: 55px; background: #0f0f0f; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 1000; }
+.nav-item { text-align: center; color: #aaaaaa; font-size: 10px; flex: 1; text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center;}
+.nav-item.active { color: white; }

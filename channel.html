@@ -1,1 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <title>ZabPlay - Channel Profile</title>
+    <style>
+        body { background:#0F0F0F; color:white; margin:0; font-family: "Roboto", sans-serif; overflow-x: hidden; }
+        
+        /* 1. CHANNEL HEADER */
+        .channel-header { text-align: center; padding-top: 20px; background: linear-gradient(to bottom, #1a1a1a, #0F0F0F); border-bottom: 1px solid #222; }
+        .back-btn { position: absolute; top: 15px; left: 15px; color: white; cursor: pointer; }
+        
+        .c-large-img { width: 80px; height: 80px; border-radius: 50%; border: 2px solid #333; margin-bottom: 10px; }
+        .c-title { font-size: 22px; font-weight: bold; margin-bottom: 5px; }
+        .c-stats { font-size: 13px; color: #aaa; margin-bottom: 15px; }
+        
+        .sub-bar { background: #fff; color: #000; border: none; padding: 10px 30px; border-radius: 25px; font-weight: bold; margin-bottom: 20px; width: 80%; }
 
+        /* 2. TAB SECTION */
+        .tabs { display: flex; justify-content: space-around; border-bottom: 1px solid #222; margin-bottom: 15px; }
+        .tab-item { padding: 12px; font-size: 14px; color: #aaa; font-weight: bold; border-bottom: 2px solid transparent; }
+        .tab-item.active { color: white; border-bottom: 2px solid white; }
+
+        /* 3. VIDEO LIST (INDEX STYLE) */
+        .video-card { width: 100%; margin-bottom: 15px; cursor: pointer; }
+        .thumb-box { width: 100%; aspect-ratio: 16/9; background: #222; position: relative; }
+        .thumb-box img { width: 100%; height: 100%; object-fit: cover; }
+        .v-details { padding: 12px; }
+        .v-title { font-size: 15px; font-weight: 500; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .v-meta { font-size: 12px; color: #aaa; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="channel-header">
+        <i class="material-icons back-btn" onclick="history.back()">arrow_back</i>
+        <img id="channel-logo" class="c-large-img" src="">
+        <div class="c-title" id="channel-name">Loading...</div>
+        <div class="c-stats" id="channel-stats">-- subscribers • -- videos</div>
+        <button class="sub-bar">Subscribe</button>
+        
+        <div class="tabs">
+            <div class="tab-item active">VIDEOS</div>
+            <div class="tab-item">SHORTS</div>
+            <div class="tab-item">PLAYLISTS</div>
+        </div>
+    </div>
+
+    <main id="channel-videos"></main>
+    <div id="loading" style="text-align:center; padding:20px; color:#FF0000; font-size:12px;">LOADING VIDEOS...</div>
+
+    <script>
+        const API_KEY = 'AIzaSyDq0kXgyqtOFXPjytI5yw5tuIZYl-xuTFs';
+        const urlParams = new URLSearchParams(window.location.search);
+        const channelId = urlParams.get('cid');
+
+        if (!channelId) window.location.href = 'index.html';
+
+        window.onload = () => {
+            fetchChannelProfile();
+        };
+
+        async function fetchChannelProfile() {
+            try {
+                // 1. Get Channel Basic Info
+                const res = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${channelId}&key=${API_KEY}`);
+                const data = await res.json();
+                const channel = data.items[0];
+
+                document.getElementById('channel-name').innerText = channel.snippet.title;
+                document.getElementById('channel-logo').src = channel.snippet.thumbnails.medium.url;
+                document.getElementById('channel-stats').innerText = formatNum(channel.statistics.subscriberCount) + " subscribers • " + channel.statistics.videoCount + " videos";
+
+                // 2. Get All Videos of this Channel
+                fetchChannelVideos();
+
+            } catch (e) { console.error("Error", e); }
+        }
+
+        async function fetchChannelVideos() {
+            try {
+                const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=30&order=date&type=video&key=${API_KEY}`);
+                const data = await res.json();
+                
+                let html = "";
+                data.items.forEach(item => {
+                    html += `
+                    <div class="video-card" onclick="window.location.href='player.html?v=${item.id.videoId}'">
+                        <div class="thumb-box">
+                            <img src="${item.snippet.thumbnails.high.url}">
+                        </div>
+                        <div class="v-details">
+                            <div class="v-title">${item.snippet.title}</div>
+                            <div class="v-meta">${formatDate(item.snippet.publishedAt)}</div>
+                        </div>
+                    </div>`;
+                });
+                document.getElementById('channel-videos').innerHTML = html;
+                document.getElementById('loading').style.display = 'none';
+            } catch (e) { console.error("Videos Load Error", e); }
+        }
+
+        function formatNum(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num;
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+    </script>
+</body>
+</html>

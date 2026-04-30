@@ -1,1 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - My YouTube Clone</title>
+    <style>
+        body { background: #0F0F0F; color: white; font-family: 'Roboto', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .login-card { background: #1E1E1E; padding: 40px; border-radius: 24px; text-align: center; width: 85%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .yt-logo { width: 60px; margin-bottom: 20px; }
+        h1 { font-size: 24px; margin-bottom: 10px; }
+        p { color: #aaa; font-size: 14px; margin-bottom: 30px; }
+        .google-btn { 
+            background: white; color: #000; border: none; padding: 12px 24px; 
+            border-radius: 30px; font-weight: bold; display: flex; align-items: center; 
+            justify-content: center; gap: 10px; width: 100%; cursor: pointer; transition: 0.3s;
+        }
+        .google-btn:active { transform: scale(0.95); }
+        .google-icon { width: 20px; }
+    </style>
+</head>
+<body>
 
+    <div class="login-card">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/e/ef/Youtube_logo.png" class="yt-logo" alt="Logo">
+        <h1>Welcome Back</h1>
+        <p>Login with Google to start uploading and watching your favorite movies.</p>
+        
+        <button class="google-btn" onclick="googleLogin()">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" class="google-icon">
+            Sign in with Google
+        </button>
+    </div>
+
+    <script>
+        function googleLogin() {
+            // Abhi ke liye ye direct home par bhej dega
+            // Asli Google Login ke liye humein Firebase config chahiye hogi
+            localStorage.setItem('isLoggedIn', 'true');
+            window.location.href = 'index.html'; 
+        }
+    </script>
+</body>
+</html>

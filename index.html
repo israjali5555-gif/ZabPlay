@@ -4,92 +4,146 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <title>ZabPlay - Unlimited Mix</title>
+    <title>ZabPlay - Smart Player</title>
     <style>
-        body { background:#0F0F0F; margin:0; font-family: Roboto, Arial, sans-serif; color: white; overflow-x: hidden; }
-        .header { position: sticky; top: 0; background: #0F0F0F; z-index: 1000; display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #222; }
-        .brand-name { font-size: 20px; font-weight: bold; color: red; }
-        
-        /* Video Card Style */
-        .video-card { width: 100%; margin-bottom: 15px; cursor: pointer; }
-        .thumb-container { position: relative; width: 100%; aspect-ratio: 16/9; background: #222; }
-        .thumb-container img { width: 100%; height: 100%; object-fit: cover; }
-        .video-info { display: flex; padding: 12px; gap: 12px; }
-        .channel-icon { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #333; }
-        .video-text h3 { font-size: 15px; margin: 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .video-text p { font-size: 12px; color: #aaa; margin: 5px 0 0 0; }
-
-        /* Navigation */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #0F0F0F; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #333; z-index: 1000; }
-        .nav-item { color: white; text-align: center; font-size: 10px; text-decoration: none; opacity: 0.6; }
-        .nav-item i { font-size: 24px; display: block; }
-        .nav-item.active { opacity: 1; color: #FF0000; }
-        
-        #loader { text-align: center; padding: 20px; color: red; font-weight: bold; }
+        body { background:#0F0F0F; color:white; margin:0; font-family: "Roboto", sans-serif; overflow-x: hidden; }
+        .video-wrapper { position: sticky; top: 0; z-index: 1000; background: #000; width: 100%; aspect-ratio: 16/9; box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
+        #player { width: 100%; height: 100%; }
+        .info-card { padding: 15px; background: #0F0F0F; }
+        .video-title { font-size: 17px; font-weight: bold; line-height: 1.4; margin-bottom: 8px; color: #fff; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
+        .meta-text { font-size: 12px; color: #aaa; margin-bottom: 15px; }
+        .action-row { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 20px; scrollbar-width: none; }
+        .chip { background: #272727; border: none; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; display: flex; align-items: center; white-space: nowrap; }
+        .chip i { font-size: 18px; margin-right: 6px; }
+        .channel-section { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #222; border-bottom: 1px solid #222; margin-bottom: 20px; }
+        .channel-section img { width: 38px; height: 38px; border-radius: 50%; background: #333; object-fit: cover; }
+        .sub-btn { background: #fff; color: #000; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 13px; margin-left: auto; }
+        .up-next-title { font-size: 15px; font-weight: bold; padding: 15px; color: #fff; }
+        .suggestion-card { display: flex; gap: 12px; padding: 10px 15px; text-decoration: none; color: white; transition: background 0.3s; }
+        .suggestion-card .thumb-box { position: relative; width: 150px; flex-shrink: 0; aspect-ratio: 16/9; }
+        .suggestion-card img { width: 100%; height: 100%; border-radius: 8px; object-fit: cover; background: #222; }
+        .s-text { flex: 1; overflow: hidden; }
+        .s-title { font-size: 14px; font-weight: 500; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 4px; }
+        .s-meta { font-size: 11px; color: #aaa; }
+        #loading-indicator { text-align: center; padding: 30px; color: #FF0000; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
-
-    <header class="header">
-        <div class="brand-name">ZabPlay</div>
-        <div style="display: flex; gap: 18px;"><i class="material-icons">search</i><i class="material-icons">account_circle</i></div>
-    </header>
-
-    <main id="main-video-feed" style="padding-bottom: 70px;"></main>
-    <div id="loader">MIXING CONTENT...</div>
-
-    <nav class="bottom-nav">
-        <div class="nav-item active" onclick="location.reload()"><i class="material-icons">home</i>Home</div>
-        <div class="nav-item" onclick="window.location.href='shorts.html'"><i class="material-icons">bolt</i>Shorts</div>
-        <div class="nav-item"><i class="material-icons">subscriptions</i>Subs</div>
-        <div class="nav-item"><i class="material-icons">video_library</i>Library</div>
-    </nav>
+    <div class="video-wrapper"><div id="player"></div></div>
+    <div class="info-card">
+        <div class="video-title" id="v-title">Loading...</div>
+        <div class="meta-text" id="v-meta">-- views • ZabPlay Premium</div>
+        <div class="action-row">
+            <button class="chip"><i class="material-icons">thumb_up_off_alt</i> <span id="v-likes">--</span></button>
+            <button class="chip"><i class="material-icons">share</i> Share</button>
+            <button class="chip"><i class="material-icons">download</i> Download</button>
+        </div>
+        <div class="channel-section">
+            <img id="c-img" src="">
+            <div>
+                <div style="font-weight:bold; font-size:15px;" id="c-name">Loading...</div>
+                <div style="font-size:12px; color:#aaa;" id="c-subs">-- subscribers</div>
+            </div>
+            <button class="sub-btn">Subscribe</button>
+        </div>
+    </div>
+    <div class="up-next-title">Up Next • Mixed Songs</div>
+    <div id="suggestions-container"></div>
+    <div id="loading-indicator">KEEP SCROLLING FOR MORE...</div>
 
     <script>
-        const API_KEY = 'AIzaSyBsEsHKy70X0jKIz3y2NNe863uCr45_qHg'; // Aapki Key
-        const videoFeed = document.getElementById('main-video-feed');
-        let isFetching = false;
-        
-        // UNLIMITED MIX TOPICS (Bina Shorts Ke)
-        const topics = ["Bollywood Movie 2026", "New Punjabi Songs", "Pakistani Drama Full", "Bhojpuri Video Gana", "Hollywood Dubbed Movies", "Comedy Circus Full"];
+        const API_KEY = 'AIzaSyBsEsHKy70X0jKIz3y2NNe863uCr45_qHg'; 
+        const urlParams = new URLSearchParams(window.location.search);
+        let videoId = urlParams.get('v');
+        let nextPageToken = '';
+        let isLoadingRelated = false;
+        let currentCategoryId = '';
+        let dynamicSearchQuery = '';
 
-        async function fetchUnlimitedHome() {
-            if (isFetching) return;
-            isFetching = true;
-            
-            let query = topics[Math.floor(Math.random() * topics.length)];
-            
-            try {
-                // PROXY SEARCH: Isse API limit kharch nahi hogi
-                const res = await fetch(`https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(query)}&filter=videos`);
-                const data = await res.json();
-                
-                data.content.forEach(v => {
-                    if(v.duration < 60) return; // Shorts ko home se hatane ke liye
+        if (!videoId) window.location.href = 'index.html';
 
-                    const card = document.createElement('div');
-                    card.className = 'video-card';
-                    card.onclick = () => window.location.href = `player.html?v=${v.videoId}`;
-                    card.innerHTML = `
-                        <div class="thumb-container"><img src="${v.thumbnail}"></div>
-                        <div class="video-info">
-                            <img class="channel-icon" src="${v.uploaderAvatar || 'https://ui-avatars.com/api/?name=Z'}">
-                            <div class="video-text">
-                                <h3>${v.title}</h3>
-                                <p>${v.uploaderName} • ${v.views.toLocaleString()} views</p>
-                            </div>
-                        </div>`;
-                    videoFeed.appendChild(card);
-                });
-            } catch (e) { console.error("Switching to backup..."); }
-            isFetching = false;
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(tag);
+
+        let player;
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                videoId: videoId,
+                playerVars: { 'autoplay': 1, 'rel': 0, 'modestbranding': 1, 'playsinline': 1 },
+                events: { 'onReady': () => fetchVideoDetails(videoId) }
+            });
         }
 
+        async function fetchVideoDetails(vId) {
+            try {
+                const vRes = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${vId}&key=${API_KEY}`);
+                const vData = await vRes.json();
+                if(!vData.items[0]) return;
+                
+                const video = vData.items[0];
+                currentCategoryId = video.snippet.categoryId;
+                
+                // SMART FIX: Pure title nahi, sirf main keywords + "songs mix" use karenge
+                const titleParts = video.snippet.title.split(' ');
+                dynamicSearchQuery = titleParts.slice(0, 2).join(' ') + " latest songs mix"; 
+
+                document.getElementById('v-title').innerText = video.snippet.title;
+                document.getElementById('v-meta').innerText = formatViews(video.statistics.viewCount) + " views";
+                document.getElementById('v-likes').innerText = formatViews(video.statistics.likeCount);
+
+                const cRes = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${video.snippet.channelId}&key=${API_KEY}`);
+                const cData = await cRes.json();
+                document.getElementById('c-name').innerText = cData.items[0].snippet.title;
+                document.getElementById('c-img').src = cData.items[0].snippet.thumbnails.default.url;
+                document.getElementById('c-subs').innerText = formatViews(cData.items[0].statistics.subscriberCount) + " subscribers";
+
+                loadUnlimitedRelated();
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadUnlimitedRelated() {
+            if (isLoadingRelated) return;
+            isLoadingRelated = true;
+
+            // GLOBAL MIX: Category + Dynamic Search + PageToken for Infinite Scroll
+            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&q=${encodeURIComponent(dynamicSearchQuery)}&type=video&videoCategoryId=${currentCategoryId}&pageToken=${nextPageToken}&key=${API_KEY}`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if(data.items) {
+                    nextPageToken = data.nextPageToken || '';
+                    let html = "";
+                    data.items.forEach(item => {
+                        if(item.id.videoId === videoId) return; // Skip current video
+                        html += `
+                        <a class="suggestion-card" href="player.html?v=${item.id.videoId}">
+                            <div class="thumb-box"><img src="${item.snippet.thumbnails.medium.url}"></div>
+                            <div class="s-text">
+                                <div class="s-title">${item.snippet.title}</div>
+                                <div class="s-meta">${item.snippet.channelTitle} • ZabPlay</div>
+                            </div>
+                        </a>`;
+                    });
+                    document.getElementById('suggestions-container').innerHTML += html;
+                }
+            } catch (e) { console.error(e); }
+            isLoadingRelated = false;
+        }
+
+        // INFINITE SCROLL: Jaise hi niche pahuche, aur videos load hon
         window.onscroll = () => {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000) fetchUnlimitedHome();
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000) {
+                if (nextPageToken && !isLoadingRelated) loadUnlimitedRelated();
+            }
         };
 
-        fetchUnlimitedHome(); // Pehla load
+        function formatViews(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num;
+        }
     </script>
 </body>
 </html>

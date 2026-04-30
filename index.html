@@ -15,7 +15,7 @@
     <style>
         body { background:#0F0F0F; margin:0; font-family: Roboto, Arial, sans-serif; color: white; overflow-x: hidden; }
         
-        /* === LOGO FIX (Wahi jo aapne banaya) === */
+        /* === LOGO FIX === */
         .zab-logo-box {
             width: 32px; height: 32px;
             background: linear-gradient(135deg, #FF0000 0%, #8B0000 100%);
@@ -50,45 +50,49 @@
         .thumbnail-container { position: relative; width: 100%; aspect-ratio: 16/9; background: #222; }
         .thumbnail-container img { width: 100%; height: 100%; object-fit: cover; }
         
-        /* SHORTS VERTICAL SCROLL - YouTube Style */
+        /* SHORTS VERTICAL SCROLL - YouTube Style Fix */
         .shorts-container { 
-            height: calc(100vh - 120px); 
+            height: calc(100vh - 70px); 
             overflow-y: scroll; 
-            scroll-snap-type: y mandatory; 
+            scroll-snap-type: y mandatory;
+            background: #000;
         }
         .short-card-full { 
-            height: 100%; 
-            width: 100%; 
+            height: calc(100vh - 70px); 
+            width: 100vw; 
             scroll-snap-align: start; 
             position: relative; 
             background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .short-card-full img { width: 100%; height: 100%; object-fit: cover; }
+        .short-card-full img { width: 100%; height: 100%; object-fit: contain; background: #000; }
 
-        .short-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.9)); display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; }
-        .short-title { font-size: 14px; font-weight: bold; margin-bottom: 10px; text-shadow: 1px 1px 4px black; }
+        .short-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.9)); display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; pointer-events: none; }
+        .short-title { font-size: 14px; font-weight: 500; margin-bottom: 10px; text-shadow: 1px 1px 4px black; max-width: 85%; }
         
-        .short-actions { position: absolute; bottom: 100px; right: 15px; display: flex; flex-direction: column; gap: 20px; align-items: center; }
-        .short-actions div { text-align: center; font-size: 12px; }
-        .short-actions i { font-size: 32px; color: white; cursor: pointer; display: block; margin-bottom: 4px; }
+        .short-actions { position: absolute; bottom: 80px; right: 10px; display: flex; flex-direction: column; gap: 15px; align-items: center; z-index: 10; }
+        .short-actions div { text-align: center; font-size: 11px; font-weight: bold; text-shadow: 1px 1px 2px black; }
+        .short-actions i { font-size: 30px; color: white; cursor: pointer; display: block; margin-bottom: 2px; }
 
         .video-info { display: flex; padding: 12px; gap: 12px; }
-        .channel-icon { width: 40px; height: 40px; border-radius: 50%; background: #333; flex-shrink: 0; }
+        .channel-icon { width: 40px; height: 40px; border-radius: 50%; background: #333; flex-shrink: 0; object-fit: cover; }
         
         .video-text h3 { font-size: 15px; margin: 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .video-text p { font-size: 12px; color: #aaa; margin: 5px 0 0 0; }
 
         .header { position: sticky; top: 0; background: #0F0F0F; z-index: 1000; display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #222; }
         .brand-container { display: flex; align-items: center; gap: 10px; }
-        .brand-name { font-size: 20px; font-weight: bold; }
+        .brand-name { font-size: 20px; font-weight: bold; letter-spacing: -0.5px; }
 
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #0F0F0F; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #333; z-index: 1000; }
-        .nav-item { color: white; text-align: center; font-size: 10px; text-decoration: none; opacity: 0.8; cursor: pointer; }
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #0F0F0F; display: flex; justify-content: space-around; padding: 8px 0; border-top: 1px solid #333; z-index: 1000; }
+        .nav-item { color: white; text-align: center; font-size: 10px; text-decoration: none; opacity: 0.6; cursor: pointer; }
         .nav-item i { font-size: 24px; display: block; margin-bottom: 2px; }
         .nav-item:active, .nav-item.active { opacity: 1; color: #FF0000; }
 
         #zabplay-splash { position: fixed; inset: 0; background: #0F0F0F; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
-        .loading-shimmer { padding: 30px; text-align: center; color: #FF0000; font-weight: bold; font-size: 14px; }
+        .loading-shimmer { padding: 20px; text-align: center; color: #FF0000; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -98,28 +102,28 @@
         <h2 style="margin-top: 20px; letter-spacing: 2px; font-family: sans-serif;">ZABPLAY</h2>
     </div>
 
-    <header class="header">
+    <header class="header" id="main-header">
         <div class="brand-container">
             <div class="zab-logo-box"></div>
             <span class="brand-name">ZabPlay</span>
         </div>
-        <div style="display: flex; gap: 15px; align-items: center;">
+        <div style="display: flex; gap: 18px; align-items: center;">
             <i class="material-icons">cast</i>
             <i class="material-icons" onclick="loadCategory('New Hindi Movies 2026')">search</i>
-            <div style="width: 28px; height: 28px; border-radius: 50%; background: #FF5722; text-align: center; line-height: 28px; font-weight: bold; font-size: 14px;" onclick="logout()">R</div>
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: #FF5722; text-align: center; line-height: 28px; font-weight: bold; font-size: 14px; cursor: pointer;" onclick="logout()">R</div>
         </div>
     </header>
 
-    <main id="main-video-feed" style="padding-bottom: 80px;"></main>
+    <main id="main-video-feed" style="padding-bottom: 70px;"></main>
     
-    <div id="loading" class="loading-shimmer">EXPLORING...</div>
-    <div id="sentinel" style="height: 100px;"></div>
+    <div id="loading" class="loading-shimmer">MIXING CONTENT...</div>
+    <div id="sentinel" style="height: 50px;"></div>
 
     <nav class="bottom-nav">
-        <div class="nav-item active" id="home-btn" onclick="loadCategory('mix_home')"><i class="material-icons">home</i>Home</div>
-        <div class="nav-item" id="shorts-btn" onclick="loadShorts()"><i class="material-icons">bolt</i>Shorts</div>
-        <div class="nav-item" onclick="loadCategory('New Punjabi Music 2026')"><i class="material-icons">subscriptions</i>Subs</div>
-        <div class="nav-item" onclick="alert('Library is empty!')"><i class="material-icons">video_library</i>Library</div>
+        <div class="nav-item active" id="home-btn" onclick="setActiveNav(this); loadCategory('mix_home')"><i class="material-icons">home</i>Home</div>
+        <div class="nav-item" id="shorts-btn" onclick="setActiveNav(this); loadShorts()"><i class="material-icons">bolt</i>Shorts</div>
+        <div class="nav-item" onclick="setActiveNav(this); loadCategory('New Punjabi Music 2026')"><i class="material-icons">subscriptions</i>Subs</div>
+        <div class="nav-item" onclick="alert('Library Empty')"><i class="material-icons">video_library</i>Library</div>
     </nav>
 
     <script>
@@ -127,8 +131,8 @@
         const videoFeed = document.getElementById('main-video-feed');
         let nextPageToken = ''; 
         let isLoading = false;
-        let currentQuery = 'bollywood movies | pakistani drama | hollywood songs | bhojpuri movie 2026'; 
         let isShortsMode = false;
+        let currentQuery = 'bollywood movies | pakistani drama | hollywood songs | bhojpuri songs'; 
         let loadedVideoIds = new Set();
 
         window.onload = () => {
@@ -141,9 +145,15 @@
             }, 2500);
         };
 
+        function setActiveNav(el) {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            el.classList.add('active');
+        }
+
         function loadShorts() {
             isShortsMode = true;
-            loadCategory('#shorts viral india trending');
+            document.getElementById('main-header').style.display = 'none';
+            loadCategory('trending shorts viral india');
         }
 
         async function loadCategory(query) {
@@ -151,18 +161,24 @@
             window.scrollTo(0, 0);
             videoFeed.innerHTML = '';
             
-            isShortsMode = query.includes('#shorts');
-            videoFeed.className = isShortsMode ? "shorts-container" : ""; 
+            if (!query.includes('shorts')) {
+                isShortsMode = false;
+                document.getElementById('main-header').style.display = 'flex';
+                videoFeed.className = ""; 
+            } else {
+                isShortsMode = true;
+                videoFeed.className = "shorts-container";
+            }
 
             if(query === 'mix_home') {
-                currentQuery = 'bollywood movies | pakistani drama | hollywood trailers | bhojpuri songs 2026';
+                currentQuery = 'bollywood movie trailer | pakistani drama OST | hollywood trailers | bhojpuri song 2026';
             } else {
                 currentQuery = query;
             }
 
             nextPageToken = '';
             loadedVideoIds.clear(); 
-            document.getElementById('loading').innerText = "MIXING CONTENT...";
+            document.getElementById('loading').innerText = isShortsMode ? "LOADING SHORTS..." : "MIXING CONTENT...";
             loadYouTubeVideos();
         }
 
@@ -188,22 +204,22 @@
 
                         const card = document.createElement('div');
                         const channelTitle = item.snippet.channelTitle;
+                        const channelIcon = `https://ui-avatars.com/api/?name=${encodeURIComponent(channelTitle)}&background=random&color=fff`;
                         
                         if(isShortsMode) {
                             card.className = 'short-card-full';
                             card.innerHTML = `
-                                <img src="https://img.youtube.com/vi/${vId}/maxresdefault.jpg" onerror="this.src='https://img.youtube.com/vi/${vId}/hqdefault.jpg'">
+                                <img src="https://img.youtube.com/vi/${vId}/maxresdefault.jpg" onerror="this.src='https://img.youtube.com/vi/${vId}/hqdefault.jpg'" onclick="window.location.href='player.html?v=${vId}'">
                                 <div class="short-actions">
-                                    <div><i class="material-icons">favorite</i>2.5L</div>
-                                    <div><i class="material-icons">thumb_down</i>Dislike</div>
-                                    <div><i class="material-icons">chat</i>450</div>
-                                    <div><i class="material-icons">share</i>Share</div>
+                                    <div><i class="material-icons">favorite</i><span>2.5L</span></div>
+                                    <div><i class="material-icons">chat</i><span>450</span></div>
+                                    <div><i class="material-icons">share</i><span>Share</span></div>
+                                    <div style="margin-top:10px;"><img src="${channelIcon}" style="width:35px; height:35px; border-radius:50%; border:2px solid white;"></div>
                                 </div>
                                 <div class="short-overlay">
-                                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
-                                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(channelTitle)}&background=random" style="width:35px; height:35px; border-radius:50%; border:1px solid white;">
-                                        <span style="font-weight:bold;">@${channelTitle.replace(/\s+/g, '').toLowerCase()}</span>
-                                        <button style="background:red; color:white; border:none; padding:5px 12px; border-radius:4px; font-size:12px;">SUBSCRIBE</button>
+                                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px; pointer-events:auto;">
+                                        <span style="font-weight:bold; font-size:15px;">@${channelTitle.replace(/\s+/g, '').toLowerCase()}</span>
+                                        <button style="background:red; color:white; border:none; padding:6px 15px; border-radius:20px; font-size:12px; font-weight:bold;">SUBSCRIBE</button>
                                     </div>
                                     <div class="short-title">${item.snippet.title}</div>
                                 </div>
@@ -215,15 +231,14 @@
                                     <img src="${item.snippet.thumbnails.high.url}">
                                 </div>
                                 <div class="video-info">
-                                    <img class="channel-icon" src="https://ui-avatars.com/api/?name=${encodeURIComponent(channelTitle)}&background=random">
+                                    <img class="channel-icon" src="${channelIcon}">
                                     <div class="video-text">
                                         <h3>${item.snippet.title}</h3>
-                                        <p>${channelTitle} • YouTube</p>
+                                        <p>${channelTitle} • ZabPlay</p>
                                     </div>
                                 </div>`;
+                            card.onclick = () => window.location.href = `player.html?v=${vId}`;
                         }
-                        
-                        card.onclick = () => window.location.href = `player.html?v=${vId}`;
                         videoFeed.appendChild(card);
                     });
                 }
@@ -235,13 +250,18 @@
             }
         }
 
-        const observer = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting && !isLoading && nextPageToken) {
+        // Infinite Scroll Logic
+        videoFeed.onscroll = () => {
+            if (isShortsMode && (videoFeed.innerHeight + videoFeed.scrollTop) >= videoFeed.scrollHeight - 500) {
                 loadYouTubeVideos();
             }
-        }, { threshold: 0.1, rootMargin: '400px' });
+        };
 
-        observer.observe(document.getElementById('sentinel'));
+        window.onscroll = () => {
+            if (!isShortsMode && (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 800) {
+                loadYouTubeVideos();
+            }
+        };
 
         function logout() { localStorage.removeItem('isLoggedIn'); window.location.href = 'login.html'; }
     </script>

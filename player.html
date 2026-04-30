@@ -4,61 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <title>ZabPlay - Premium Player</title>
+    <title>ZabPlay - Smart Player</title>
     <style>
         body { background:#0F0F0F; color:white; margin:0; font-family: "Roboto", sans-serif; overflow-x: hidden; }
-        
-        /* 1. STICKY VIDEO PLAYER */
         .video-wrapper { position: sticky; top: 0; z-index: 1000; background: #000; width: 100%; aspect-ratio: 16/9; box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
         #player { width: 100%; height: 100%; }
-
-        /* 2. INFO AREA */
         .info-card { padding: 15px; background: #0F0F0F; }
         .video-title { font-size: 17px; font-weight: bold; line-height: 1.4; margin-bottom: 8px; color: #fff; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
         .meta-text { font-size: 12px; color: #aaa; margin-bottom: 15px; }
-
-        /* 3. CHIPS */
         .action-row { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 20px; scrollbar-width: none; }
-        .action-row::-webkit-scrollbar { display: none; }
         .chip { background: #272727; border: none; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; display: flex; align-items: center; white-space: nowrap; }
         .chip i { font-size: 18px; margin-right: 6px; }
-
-        /* 4. CHANNEL SECTION */
         .channel-section { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #222; border-bottom: 1px solid #222; margin-bottom: 20px; }
         .channel-section img { width: 38px; height: 38px; border-radius: 50%; background: #333; object-fit: cover; }
         .sub-btn { background: #fff; color: #000; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 13px; margin-left: auto; }
-
-        /* 5. UNLIMITED SUGGESTIONS LIST */
-        .up-next-title { font-size: 15px; font-weight: bold; padding: 0 15px 10px 15px; color: #fff; }
+        .up-next-title { font-size: 15px; font-weight: bold; padding: 15px; color: #fff; }
         .suggestion-card { display: flex; gap: 12px; padding: 10px 15px; text-decoration: none; color: white; transition: background 0.3s; }
-        .suggestion-card:active { background: #1a1a1a; }
         .suggestion-card .thumb-box { position: relative; width: 150px; flex-shrink: 0; aspect-ratio: 16/9; }
         .suggestion-card img { width: 100%; height: 100%; border-radius: 8px; object-fit: cover; background: #222; }
         .s-text { flex: 1; overflow: hidden; }
         .s-title { font-size: 14px; font-weight: 500; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 4px; }
         .s-meta { font-size: 11px; color: #aaa; }
-        
-        #loading-indicator { text-align: center; padding: 20px; color: #FF0000; font-weight: bold; font-size: 14px; }
+        #loading-indicator { text-align: center; padding: 30px; color: #FF0000; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
-
-    <div class="video-wrapper">
-        <div id="player"></div>
-    </div>
-
+    <div class="video-wrapper"><div id="player"></div></div>
     <div class="info-card">
-        <div class="video-title" id="v-title">Loading video details...</div>
+        <div class="video-title" id="v-title">Loading...</div>
         <div class="meta-text" id="v-meta">-- views • ZabPlay Premium</div>
-
         <div class="action-row">
             <button class="chip"><i class="material-icons">thumb_up_off_alt</i> <span id="v-likes">--</span></button>
             <button class="chip"><i class="material-icons">share</i> Share</button>
             <button class="chip"><i class="material-icons">download</i> Download</button>
-            <button class="chip"><i class="material-icons">playlist_add</i> Save</button>
         </div>
-
-        <div class="channel-section" id="channel-link" style="cursor: pointer;">
+        <div class="channel-section">
             <img id="c-img" src="">
             <div>
                 <div style="font-weight:bold; font-size:15px;" id="c-name">Loading...</div>
@@ -67,21 +47,18 @@
             <button class="sub-btn">Subscribe</button>
         </div>
     </div>
-
-    <div class="up-next-title">Up Next</div>
-    
+    <div class="up-next-title">Up Next • Mixed Songs</div>
     <div id="suggestions-container"></div>
-    
-    <div id="loading-indicator">LOADING MORE HITS...</div>
+    <div id="loading-indicator">KEEP SCROLLING FOR MORE...</div>
 
     <script>
-        const API_KEY = 'AIzaSyBsEsHKy70X0jKIz3y2NNe863uCr45_qHg'; // Aapki Nayi Key
+        const API_KEY = 'AIzaSyBsEsHKy70X0jKIz3y2NNe863uCr45_qHg'; 
         const urlParams = new URLSearchParams(window.location.search);
         let videoId = urlParams.get('v');
         let nextPageToken = '';
         let isLoadingRelated = false;
         let currentCategoryId = '';
-        let videoSearchTerms = '';
+        let dynamicSearchQuery = '';
 
         if (!videoId) window.location.href = 'index.html';
 
@@ -101,58 +78,48 @@
         async function fetchVideoDetails(vId) {
             try {
                 const vRes = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${vId}&key=${API_KEY}`);
-                
-                if (vRes.status === 403) {
-                    document.getElementById('v-title').innerHTML = "<span style='color:red;'>API Limit Over! Code mein key badlein.</span>";
-                    return;
-                }
-
                 const vData = await vRes.json();
                 if(!vData.items[0]) return;
                 
                 const video = vData.items[0];
                 currentCategoryId = video.snippet.categoryId;
-                videoSearchTerms = video.snippet.title.split(' ').slice(0, 2).join(' '); // Trending Keyword Match
+                
+                // SMART FIX: Pure title nahi, sirf main keywords + "songs mix" use karenge
+                const titleParts = video.snippet.title.split(' ');
+                dynamicSearchQuery = titleParts.slice(0, 2).join(' ') + " latest songs mix"; 
 
                 document.getElementById('v-title').innerText = video.snippet.title;
-                document.getElementById('v-meta').innerText = formatViews(video.statistics.viewCount) + " views • ZabPlay Premium";
+                document.getElementById('v-meta').innerText = formatViews(video.statistics.viewCount) + " views";
                 document.getElementById('v-likes').innerText = formatViews(video.statistics.likeCount);
 
                 const cRes = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${video.snippet.channelId}&key=${API_KEY}`);
                 const cData = await cRes.json();
-                const channel = cData.items[0];
-
-                document.getElementById('c-name').innerText = channel.snippet.title;
-                document.getElementById('c-img').src = channel.snippet.thumbnails.default.url;
-                document.getElementById('c-subs').innerText = formatViews(channel.statistics.subscriberCount) + " subscribers";
+                document.getElementById('c-name').innerText = cData.items[0].snippet.title;
+                document.getElementById('c-img').src = cData.items[0].snippet.thumbnails.default.url;
+                document.getElementById('c-subs').innerText = formatViews(cData.items[0].statistics.subscriberCount) + " subscribers";
 
                 loadUnlimitedRelated();
-
-            } catch (e) { console.error("API Error", e); }
+            } catch (e) { console.error(e); }
         }
 
         async function loadUnlimitedRelated() {
             if (isLoadingRelated) return;
             isLoadingRelated = true;
-            document.getElementById('loading-indicator').style.display = 'block';
 
-            // Infinite relevant content logic
-            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&q=${encodeURIComponent(videoSearchTerms)}&type=video&videoCategoryId=${currentCategoryId}&pageToken=${nextPageToken}&key=${API_KEY}`;
+            // GLOBAL MIX: Category + Dynamic Search + PageToken for Infinite Scroll
+            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&q=${encodeURIComponent(dynamicSearchQuery)}&type=video&videoCategoryId=${currentCategoryId}&pageToken=${nextPageToken}&key=${API_KEY}`;
 
             try {
                 const res = await fetch(url);
                 const data = await res.json();
-                
                 if(data.items) {
                     nextPageToken = data.nextPageToken || '';
                     let html = "";
                     data.items.forEach(item => {
-                        if(item.id.videoId === videoId) return; 
+                        if(item.id.videoId === videoId) return; // Skip current video
                         html += `
                         <a class="suggestion-card" href="player.html?v=${item.id.videoId}">
-                            <div class="thumb-box">
-                                <img src="${item.snippet.thumbnails.medium.url}">
-                            </div>
+                            <div class="thumb-box"><img src="${item.snippet.thumbnails.medium.url}"></div>
                             <div class="s-text">
                                 <div class="s-title">${item.snippet.title}</div>
                                 <div class="s-meta">${item.snippet.channelTitle} • ZabPlay</div>
@@ -162,22 +129,17 @@
                     document.getElementById('suggestions-container').innerHTML += html;
                 }
             } catch (e) { console.error(e); }
-            
             isLoadingRelated = false;
-            if (!nextPageToken) document.getElementById('loading-indicator').innerText = "END OF LIST";
         }
 
-        // --- INFINITE SCROLL DETECTION ---
+        // INFINITE SCROLL: Jaise hi niche pahuche, aur videos load hon
         window.onscroll = () => {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 900) {
-                if (nextPageToken && !isLoadingRelated) {
-                    loadUnlimitedRelated();
-                }
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000) {
+                if (nextPageToken && !isLoadingRelated) loadUnlimitedRelated();
             }
         };
 
         function formatViews(num) {
-            if (!num) return "0";
             if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
             if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
             return num;
@@ -185,4 +147,3 @@
     </script>
 </body>
 </html>
-               

@@ -15,7 +15,7 @@
     <style>
         body { background:#0F0F0F; margin:0; font-family: Roboto, Arial, sans-serif; color: white; overflow-x: hidden; }
         
-        /* === LOGO FIX === */
+        /* === LOGO FIX (Wahi jo aapne banaya) === */
         .zab-logo-box {
             width: 32px; height: 32px;
             background: linear-gradient(135deg, #FF0000 0%, #8B0000 100%);
@@ -50,6 +50,12 @@
         .thumbnail-container { position: relative; width: 100%; aspect-ratio: 16/9; background: #222; }
         .thumbnail-container img { width: 100%; height: 100%; object-fit: cover; }
         
+        /* SHORTS SPECIAL GRID */
+        .shorts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; }
+        .short-card { aspect-ratio: 9/16; position: relative; border-radius: 8px; overflow: hidden; background: #222; }
+        .short-card img { width: 100%; height: 100%; object-fit: cover; }
+        .short-title { position: absolute; bottom: 8px; left: 8px; font-size: 11px; font-weight: bold; text-shadow: 1px 1px 4px black; }
+
         .video-info { display: flex; padding: 12px; gap: 12px; }
         .channel-icon { width: 40px; height: 40px; border-radius: 50%; background: #333; flex-shrink: 0; }
         
@@ -90,13 +96,13 @@
 
     <main id="main-video-feed" style="padding-bottom: 80px;"></main>
     
-    <div id="loading" class="loading-shimmer">EXPLORING NEW CONTENT...</div>
-    <div id="sentinel" style="height: 20px;"></div>
+    <div id="loading" class="loading-shimmer">EXPLORING...</div>
+    <div id="sentinel" style="height: 50px;"></div>
 
     <nav class="bottom-nav">
-        <div class="nav-item" onclick="location.reload()"><i class="material-icons">home</i>Home</div>
-        <div class="nav-item" onclick="loadCategory('YouTube Shorts New')"><i class="material-icons">bolt</i>Shorts</div>
-        <div class="nav-item" onclick="loadCategory('Trending Music India')"><i class="material-icons">subscriptions</i>Subs</div>
+        <div class="nav-item active" id="home-btn" onclick="loadCategory('latest movies trailers songs')"><i class="material-icons">home</i>Home</div>
+        <div class="nav-item" id="shorts-btn" onclick="loadShorts()"><i class="material-icons">bolt</i>Shorts</div>
+        <div class="nav-item" onclick="loadCategory('New Punjabi Music 2026')"><i class="material-icons">subscriptions</i>Subs</div>
         <div class="nav-item" onclick="alert('Library is empty!')"><i class="material-icons">video_library</i>Library</div>
     </nav>
 
@@ -105,8 +111,9 @@
         const videoFeed = document.getElementById('main-video-feed');
         let nextPageToken = ''; 
         let isLoading = false;
-        let currentQuery = ''; 
-        let loadedVideoIds = new Set(); // FIXED: Duplicate videos rokne ke liye
+        let currentQuery = 'latest movies trailers songs'; 
+        let isShortsMode = false;
+        let loadedVideoIds = new Set();
 
         window.onload = () => {
             setTimeout(() => {
@@ -118,14 +125,30 @@
             }, 2500);
         };
 
+        // FIXED: Shorts loading function
+        function loadShorts() {
+            isShortsMode = true;
+            loadCategory('#shorts trending viral');
+        }
+
         async function loadCategory(query) {
             if (isLoading) return;
             window.scrollTo(0, 0);
             videoFeed.innerHTML = '';
+            
+            // Shorts Mode Toggle
+            if(query.includes('#shorts')) {
+                isShortsMode = true;
+                videoFeed.className = "shorts-grid"; 
+            } else {
+                isShortsMode = false;
+                videoFeed.className = ""; 
+            }
+
             nextPageToken = '';
             currentQuery = query;
-            loadedVideoIds.clear(); // Reset unique filter
-            document.getElementById('loading').innerText = "DISCOVERING " + query.toUpperCase() + "...";
+            loadedVideoIds.clear(); 
+            document.getElementById('loading').innerText = "DISCOVERING NEW CONTENT...";
             loadYouTubeVideos();
         }
 
@@ -135,46 +158,47 @@
             document.getElementById('loading').style.display = 'block';
 
             try {
-                let url;
-                // FIXED: Agar query hai toh Search API, nahi toh Trending
-                if(currentQuery !== '') {
-                    url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=25&q=${encodeURIComponent(currentQuery)}&type=video&pageToken=${nextPageToken}&key=${API_KEY}`;
-                } else {
-                    // Default Home Feed: Mix of movies and trending
-                    url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=25&q=latest+movies+trailers+songs&type=video&pageToken=${nextPageToken}&key=${API_KEY}`;
-                }
+                // FIXED: Agar Shorts mode hai to duration 'short' (under 4 min) mangte hain
+                const durationFilter = isShortsMode ? "&videoDuration=short" : "&videoDuration=medium";
+                const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=25&q=${encodeURIComponent(currentQuery)}&type=video${durationFilter}&pageToken=${nextPageToken}&key=${API_KEY}`;
                 
                 const response = await fetch(url);
                 const data = await response.json();
 
-                if (data.items && data.items.length > 0) {
+                if (data.items) {
                     nextPageToken = data.nextPageToken || ''; 
 
                     data.items.forEach(item => {
-                        const vId = (typeof item.id === 'string') ? item.id : item.id.videoId;
-                        
-                        // FIXED: Duplicate video check
+                        const vId = item.id.videoId;
                         if(!vId || loadedVideoIds.has(vId)) return;
                         loadedVideoIds.add(vId);
 
-                        const title = item.snippet.title;
-                        const channel = item.snippet.channelTitle;
-                        const thumb = item.snippet.thumbnails.high.url;
-
                         const card = document.createElement('div');
-                        card.className = 'video-card';
-                        card.onclick = () => window.location.href = `player.html?v=${vId}`;
-                        card.innerHTML = `
-                            <div class="thumbnail-container">
-                                <img src="${thumb}">
-                            </div>
-                            <div class="video-info">
-                                <div class="channel-icon" style="background-image: url('https://ui-avatars.com/api/?name=${encodeURIComponent(channel)}&background=random'); background-size: cover;"></div>
-                                <div class="video-text">
-                                    <h3>${title}</h3>
-                                    <p>${channel} • YouTube</p>
+                        
+                        if(isShortsMode) {
+                            // --- SHORTS UI DESIGN ---
+                            card.className = 'short-card';
+                            card.innerHTML = `
+                                <img src="https://img.youtube.com/vi/${vId}/hqdefault.jpg">
+                                <div class="short-title">${item.snippet.title.substring(0, 40)}...</div>
+                            `;
+                        } else {
+                            // --- HOME/LONG VIDEO UI DESIGN ---
+                            card.className = 'video-card';
+                            card.innerHTML = `
+                                <div class="thumbnail-container">
+                                    <img src="${item.snippet.thumbnails.high.url}">
                                 </div>
-                            </div>`;
+                                <div class="video-info">
+                                    <div class="channel-icon" style="background-image: url('https://ui-avatars.com/api/?name=${encodeURIComponent(item.snippet.channelTitle)}&background=random'); background-size: cover;"></div>
+                                    <div class="video-text">
+                                        <h3>${item.snippet.title}</h3>
+                                        <p>${item.snippet.channelTitle} • YouTube</p>
+                                    </div>
+                                </div>`;
+                        }
+                        
+                        card.onclick = () => window.location.href = `player.html?v=${vId}`;
                         videoFeed.appendChild(card);
                     });
                 }
@@ -186,12 +210,11 @@
             }
         }
 
-        // FIXED: Advance Infinite Scroll using Intersection Observer
         const observer = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting && !isLoading && nextPageToken) {
                 loadYouTubeVideos();
             }
-        }, { threshold: 0.5 });
+        }, { threshold: 0.1 });
 
         observer.observe(document.getElementById('sentinel'));
 
